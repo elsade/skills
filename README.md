@@ -48,6 +48,15 @@ Commits staged changes, pushes, opens a GitHub PR with a Linear issue link in th
 - `mcp__linear-server__save_comment` (MCP) — links PR back to Linear issue
 - `gh` CLI — creates PR and pushes branch
 
+### responding-to-pr-feedback
+
+Evaluates PR review comments before acting — checks if already addressed, validates against the codebase, asks the user about ambiguous items, implements valid fixes, pushes back on invalid ones with technical reasoning, runs quality gates, then replies to every comment thread on GitHub. Never commits — stages changes for human review.
+
+**Usage:** `/responding-to-pr-feedback` or triggered when user says "address PR feedback", "handle review comments", etc.
+
+**Depends on:**
+- `gh` CLI — fetches PR data and posts comment replies
+
 ### update-aws-secret
 
 Safely adds or updates a key in an AWS Secrets Manager YAML secret. Downloads existing content first, appends the key, diffs, confirms with user, pushes, verifies, and cleans up temp files.
