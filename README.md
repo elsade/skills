@@ -4,7 +4,7 @@ Custom Claude Code skills for code review workflows.
 
 ## Third-party skill dependencies
 
-Several skills below fan out to reviewer agents that use skills not included in this repo. None of these are installed as marketplace plugins (`claude plugin install` won't find them) — they're loose `SKILL.md`/command files that need to be placed under `~/.claude/skills/<name>/` (or `~/.claude/commands/<name>.md` for command-style ones) before the reviews that depend on them will work.
+Several skills below fan out to reviewer agents that use skills not included in this repo. Most of these are not installed as marketplace plugins (`claude plugin install` won't find them) — they're loose `SKILL.md`/command files that need to be placed under `~/.claude/skills/<name>/` (or `~/.claude/commands/<name>.md` for command-style ones) before the reviews that depend on them will work. The one exception is `superpowers:code-reviewer`, which is a real marketplace plugin — see its row below for the install command.
 
 | Name | Type | Source | Install as |
 |------|------|--------|------------|
