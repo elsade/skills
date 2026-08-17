@@ -42,7 +42,7 @@ Parse into a normalized list with keys: `author`, `file`, `lines`, `body`, `type
 
 ### 3. Fan out reviewers in parallel (5 core + 6 conditional)
 
-Send a **single message with all applicable Agent tool calls** so they run concurrently. Always dispatch A-E. Only dispatch F-K whose gate condition matches the diff — each is independent, so a PR can trigger any combination of them (or none). Give each reviewer the full diff plus commit context. Tell each to return findings as a JSON array of objects with keys: `file`, `lines`, `severity` (critical|high|medium|low|nit), `category`, `summary`, `suggested_fix`.
+Send a **single message with all applicable Agent tool calls** so they run concurrently. Always dispatch A-E. Only dispatch F-K whose gate conditions match the diff — each is independent, so a PR can trigger any combination of them (or none). Give each reviewer the full diff plus commit context. Tell each to return findings as a JSON array of objects with keys: `file`, `lines`, `severity` (critical|high|medium|low|nit), `category`, `summary`, `suggested_fix`.
 
 **Reviewer A — Architectural perspective:**
 - `subagent_type: general-purpose`
