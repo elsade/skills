@@ -15,6 +15,7 @@ Several skills below fan out to reviewer agents that use skills not included in 
 | `terraform-specialist` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/terraform-specialist) | `~/.claude/skills/terraform-specialist/` |
 | `kubernetes-architect` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/kubernetes-architect) | `~/.claude/skills/kubernetes-architect/` |
 | `docker-expert` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/docker-expert) | `~/.claude/skills/docker-expert/` |
+| `observability-engineer` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/observability-engineer) | `~/.claude/skills/observability-engineer/` |
 | `humanizer` | skill/command | [blader/humanizer](https://github.com/blader/humanizer) | `~/.claude/skills/humanizer/` or `~/.claude/commands/humanizer.md` |
 | `superpowers:code-reviewer` | plugin agent | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) (`superpowers` plugin) | `claude plugin install superpowers@claude-plugins-official` |
 | `codex:codex-rescue` (or `codex` CLI fallback) | plugin agent / CLI | [openai/codex](https://github.com/openai/codex) | Codex CLI on `PATH`; the `codex-rescue` subagent is optional — both skills fall back to `codex exec --sandbox read-only` if it isn't registered |
@@ -25,7 +26,7 @@ The `antigravity-awesome-skills` skills came in with generic `source: community`
 
 ### code-review-meta
 
-Meta code review for your own branches. Fans out to core reviewers (architecture, code quality, Clean Code, simplification/efficiency, Codex — plus conditional API, database, Terraform, Kubernetes, and Docker reviewers), aggregates and deduplicates findings into a prioritized fix list, surfaces ambiguities for clarification, then offers to resolve.
+Meta code review for your own branches. Fans out to core reviewers (architecture, code quality, Clean Code, simplification/efficiency, Codex — plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), aggregates and deduplicates findings into a prioritized fix list, surfaces ambiguities for clarification, then offers to resolve.
 
 **Usage:** `/code-review-meta` (reviews current branch vs main) or `/code-review-meta 123` (reviews PR #123)
 
@@ -37,13 +38,14 @@ Meta code review for your own branches. Fans out to core reviewers (architecture
 - `terraform-specialist` (skill, conditional) — Terraform/IaC review
 - `kubernetes-architect` (skill, conditional) — Kubernetes manifest/Helm/GitOps review
 - `docker-expert` (skill, conditional) — Dockerfile/container build review
+- `observability-engineer` (skill, conditional) — OTel instrumentation/observability review
 - `humanizer` (skill) — strips AI writing patterns from output
 - `superpowers:code-reviewer` (agent) — code quality reviewer
 - `codex:codex-rescue` (agent) — Codex second-opinion reviewer
 
 ### code-review-remote
 
-Reviews other people's PRs on GitHub. Dispatches 5-10 reviewers in parallel (architecture, code quality, Codex, Clean Code, simplification/efficiency, plus conditional API, database, Terraform, Kubernetes, and Docker reviewers), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings, humanizes the output, and optionally posts comments back to the PR.
+Reviews other people's PRs on GitHub. Dispatches 5-11 reviewers in parallel (architecture, code quality, Codex, Clean Code, simplification/efficiency, plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings, humanizes the output, and optionally posts comments back to the PR.
 
 **Usage:** `/code-review-remote 123` (reviews PR #123 in current repo)
 
@@ -55,6 +57,7 @@ Reviews other people's PRs on GitHub. Dispatches 5-10 reviewers in parallel (arc
 - `terraform-specialist` (skill, conditional) — Terraform/IaC review
 - `kubernetes-architect` (skill, conditional) — Kubernetes manifest/Helm/GitOps review
 - `docker-expert` (skill, conditional) — Dockerfile/container build review
+- `observability-engineer` (skill, conditional) — OTel instrumentation/observability review
 - `humanizer` (skill) — strips AI writing patterns from output
 - `superpowers:code-reviewer` (agent) — code quality reviewer
 - `codex:codex-rescue` (agent) — Codex second-opinion reviewer
