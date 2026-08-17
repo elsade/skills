@@ -2,7 +2,7 @@
 
 ## Overview
 
-Reviews other people's PRs on GitHub. Runs five core reviewers in parallel (plus conditional reviewers for API, database, and infrastructure changes), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings against both reviewer overlap and prior comments, then humanizes the final output before presenting it.
+Reviews other people's PRs on GitHub. Runs five core reviewers in parallel (plus conditional reviewers for API, database, infrastructure, and observability changes), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings against both reviewer overlap and prior comments, then humanizes the final output before presenting it.
 
 ## When to Use
 
@@ -40,9 +40,9 @@ gh api repos/{owner}/{repo}/issues/{N}/comments --paginate
 
 Parse into a normalized list with keys: `author`, `file`, `lines`, `body`, `type` (review_comment | issue_comment | review_body).
 
-### 3. Fan out reviewers in parallel (5 core + 5 conditional)
+### 3. Fan out reviewers in parallel (5 core + 6 conditional)
 
-Send a **single message with all applicable Agent tool calls** so they run concurrently. Always dispatch A-E. Only dispatch F-J whose gate condition matches the diff — each is independent, so a PR can trigger any combination of them (or none). Give each reviewer the full diff plus commit context. Tell each to return findings as a JSON array of objects with keys: `file`, `lines`, `severity` (critical|high|medium|low|nit), `category`, `summary`, `suggested_fix`.
+Send a **single message with all applicable Agent tool calls** so they run concurrently. Always dispatch A-E. Only dispatch F-K whose gate conditions match the diff — each is independent, so a PR can trigger any combination of them (or none). Give each reviewer the full diff plus commit context. Tell each to return findings as a JSON array of objects with keys: `file`, `lines`, `severity` (critical|high|medium|low|nit), `category`, `summary`, `suggested_fix`.
 
 **Reviewer A — Architectural perspective:**
 - `subagent_type: general-purpose`
@@ -94,6 +94,12 @@ Send a **single message with all applicable Agent tool calls** so they run concu
 - Quick heuristic: scan the diff for `FROM `, `RUN `, `COPY --from=`, `ENTRYPOINT`, `CMD`. If none match, skip Reviewer J entirely.
 - `subagent_type: general-purpose`
 - Prompt: "Review this diff using the `docker-expert` skill. Flag issues with image size/layer efficiency, multi-stage build opportunities, security hardening (running as root, unpinned base images, leaked build secrets), and container best practices. Focus on Docker/container build concerns only, NOT application logic or Kubernetes deployment concerns — those are covered by other reviewers. Return JSON findings."
+
+**Reviewer K — Observability / OTel (conditional):**
+- **Only dispatch if** the diff touches OTel instrumentation or observability config: SDK initialization, span/trace/metric/log code, OTel Collector config files, or telemetry utility modules.
+- Quick heuristic: scan the diff for patterns like `opentelemetry`, `init_otel`, `get_current_span`, `set_attribute`, `record_exception`, `set_status`, `StatusCode`, `TracerProvider`, `MeterProvider`, `BatchSpanProcessor`, `OTEL_`, `otlp`, or files matching `**/telemetry/**`, `**/otel*.py`, `**/tracing/**`, `*otel-collector*.yaml`, `*otel*.yaml`. If none match, skip Reviewer K entirely.
+- `subagent_type: general-purpose`
+- Prompt: "Review this diff using the `observability-engineer` skill. Focus on: OTel semantic convention compliance (attribute naming, span status, error recording), context propagation correctness (traceparent injection/extraction), sampling strategy soundness, metric naming and cardinality, log-to-trace correlation, collector pipeline ordering and processor correctness, missing required span attributes, and performance implications (sync vs batch export, SDK no-op guard correctness). Focus on observability correctness only, NOT general code quality or architecture — those are covered by other reviewers. Return JSON findings."
 
 ### 4. Aggregate and deduplicate (reviewers)
 
@@ -219,7 +225,7 @@ gh api repos/{owner}/{repo}/pulls/{N}/comments \
 |------|------|-----------|
 | Fetch PR metadata + diff | Bash (`gh`) | — |
 | Fetch existing comments | Bash (`gh api`) | **Yes** (with above) |
-| Dispatch 5-10 reviewers | Agent x 5-10 in one message | **Yes** |
+| Dispatch 5-11 reviewers | Agent x 5-11 in one message | **Yes** |
 | Aggregate/dedupe reviewers | In-context reasoning | — |
 | Dedupe vs existing comments | In-context reasoning | — |
 | Humanize output | Apply humanizer patterns | — |

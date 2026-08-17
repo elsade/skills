@@ -1,5 +1,5 @@
 ---
-description: Run a meta code review that fans out to architecture, code-quality, Clean Code, simplification/efficiency, and Codex reviewers (plus conditional API-design, database, Terraform, Kubernetes, and Docker reviewers), aggregates findings into a prioritized fix list, clarifies ambiguities, then offers to resolve.
+description: Run a meta code review that fans out to architecture, code-quality, Clean Code, simplification/efficiency, and Codex reviewers (plus conditional API-design, database, Terraform, Kubernetes, Docker, and observability reviewers), aggregates findings into a prioritized fix list, clarifies ambiguities, then offers to resolve.
 argument-hint: "[PR number | empty for local branch vs main]"
 allowed-tools: Read, Glob, Grep, Bash(git:*), Bash(gh:*), Bash(codex:*), Bash(node:*), Agent, Skill, Edit, Write
 ---
@@ -26,6 +26,7 @@ Then follow the `code-review-meta` skill exactly:
    - **Terraform (conditional)** — dispatch only if the diff touches `.tf`/`.tfvars`/`.tfvars.json`/`.terraform.lock.hcl` files or `**/terraform/**`, `**/infra/**`, `**/environments/**`. Use the `terraform-specialist` skill. Flag state management, module design, provider pinning, unsafe changes (implicit replacement, missing lifecycle blocks, hardcoded secrets). IaC concerns only.
    - **Kubernetes / GitOps (conditional)** — dispatch only if the diff touches K8s manifests, Helm charts, or GitOps config (`apiVersion:`/`kind:` blocks, `Chart.yaml`, `values*.yaml`, `templates/**/*.yaml`, ArgoCD `Application`, Flux `HelmRelease`/`Kustomization`). Use the `kubernetes-architect` skill. Flag resource limits, pod security context, missing PDB/HPA, GitOps drift risk, Helm templating mistakes.
    - **Docker (conditional)** — dispatch only if the diff touches `Dockerfile`/`Dockerfile.*` or `**/docker/**`. Use the `docker-expert` skill. Flag image size/layer efficiency, multi-stage build opportunities, security hardening (root user, unpinned base images, leaked secrets). Container build concerns only.
+   - **Observability / OTel (conditional)** — dispatch only if the diff touches OTel instrumentation or observability config: SDK initialization, span/trace/metric/log code, OTel Collector config files, or telemetry utility modules. Use the `observability-engineer` skill. Flag semantic convention compliance, context propagation correctness, sampling strategy, metric naming/cardinality, log-to-trace correlation, collector pipeline correctness. Observability concerns only.
 3. Aggregate and deduplicate findings, preserving source attribution. If reviewers disagree on severity, take the highest and note the disagreement.
 4. Apply the `humanizer` skill to every finding's summary and suggested fix before presenting — strip AI writing tells, write like a colleague, keep technical precision.
 5. Emit the final markdown report with a recommended fix order.
