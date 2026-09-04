@@ -1,19 +1,18 @@
 ---
+name: code-review-meta
 description: Run a meta code review that fans out to architecture, code-quality, Clean Code, simplification/efficiency, and Codex reviewers (plus conditional API-design, database, Terraform, Kubernetes, Docker, and observability reviewers), aggregates findings into a prioritized fix list, clarifies ambiguities, then offers to resolve.
 argument-hint: "[PR number | empty for local branch vs main]"
 allowed-tools: Read, Glob, Grep, Bash(git:*), Bash(gh:*), Bash(codex:*), Bash(node:*), Agent, Skill, Edit, Write
 ---
 
-Invoke the `code-review-meta` skill to review the following scope.
-
-Raw argument: `$ARGUMENTS`
+Review the following scope.
 
 Scope resolution:
-- If `$ARGUMENTS` is a positive integer → **PR mode**: review GitHub PR #$ARGUMENTS in the current repo (use `gh pr view` and `gh pr diff`).
-- If `$ARGUMENTS` is empty → **Local branch mode**: review the current branch against `origin/main` (base = `git merge-base HEAD origin/main`).
+- If argument is a positive integer → **PR mode**: review GitHub PR #N in the current repo (use `gh pr view` and `gh pr diff`).
+- If argument is empty → **Local branch mode**: review the current branch against `origin/main` (base = `git merge-base HEAD origin/main`).
 - Anything else → ask the user to clarify before proceeding.
 
-Then follow the `code-review-meta` skill exactly:
+Then:
 1. Resolve the diff.
 2. Dispatch reviewers **in parallel** (one message with all applicable Agent tool calls):
    - **Architecture** — `general-purpose`, using the `architecture-patterns` skill. Flag boundary violations, leaky abstractions, coupling issues, misplaced logic. No style or small-bug comments.
