@@ -1,3 +1,10 @@
+---
+name: code-review-remote
+description: Use when reviewing someone else's pull request on GitHub - the user asks to review a PR, invokes /code-review-remote with a PR number, or shares a PR URL. Fans out to parallel architecture, code-quality, Clean Code, simplification, and Codex reviewers (plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), fetches existing PR comments to avoid duplicate feedback, deduplicates findings, and humanizes the output before presenting it.
+argument-hint: "[PR number or URL]"
+allowed-tools: Read, Glob, Grep, Bash(git:*), Bash(gh:*), Bash(codex:*), Agent, Skill
+---
+
 # Code Review Remote
 
 ## Overview

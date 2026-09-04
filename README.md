@@ -20,7 +20,11 @@ Several skills below fan out to reviewer agents that use skills not included in 
 | `superpowers:code-reviewer` | plugin agent | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) (`superpowers` plugin) | `claude plugin install superpowers@claude-plugins-official` |
 | `codex:codex-rescue` (or `codex` CLI fallback) | plugin agent / CLI | [openai/codex](https://github.com/openai/codex) | Codex CLI on `PATH`; the `codex-rescue` subagent is optional — both skills fall back to `codex exec --sandbox read-only` if it isn't registered |
 
-The `antigravity-awesome-skills` skills came in with generic `source: community` frontmatter and no upstream link, which is why they weren't credited before — the link above is to the current copy in that collection, not a guarantee of exact version parity with what's installed locally. Note `kubernetes-architect` is tagged `risk: unknown` in that collection's catalog (vs. `none`/`safe` for the others) — nobody's explicitly vetted it, though it's read-only in this use.
+The `antigravity-awesome-skills` skills came in with generic `source: community` frontmatter and no upstream link, which is why they weren't credited before — the link above is to the current copy in that collection, not a guarantee of exact version parity with what's installed locally.
+
+Four of the eight skills are tagged `risk: critical` in that collection's catalog: `terraform-specialist`, `kubernetes-architect`, `docker-expert`, and `observability-engineer`. The remaining four are tagged `none` or `safe` (`architecture-patterns`, `database-architect`, `api-design-principles`, `uncle-bob-craft`). The critical-tagged skills are used read-only here — they review diffs and return findings, they never write files or execute commands on your behalf — but the `risk:` tags reflect the upstream author's assessment of what those skills could do in a broader context. These tags aren't version-pinned; upstream is a moving target.
+
+> **Note:** Every `SKILL.md` must include both a `name:` and a `description:` key in its frontmatter or Claude Code won't index it for description-based matching — it can only be invoked by its exact name. The `code-review-remote` skill was missing its entire frontmatter block for this reason.
 
 ## Skills
 
