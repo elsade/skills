@@ -42,7 +42,7 @@ Collect all unique GitHub issue URLs.
 Format:
 
 ```
-<@UXXXXXXXX> <@UYYYYYYYY> <@UZZZZZZZZ> <category>:
+<@UXXXXXXXX> <@UYYYYYYYY> <@UZZZZZZZZ> (category):
 
 <summary> [<ticket-id>]
 
@@ -72,8 +72,8 @@ Use `mcp__plugin_slack_slack__slack_send_message_draft` so the user can review b
 
 ```
 mcp__plugin_slack_slack__slack_send_message_draft(
-  channel_id: "<backend-channel-id>",
-  message: "<composed message>"
+  channel_id="<backend-channel-id>",
+  message="<composed message>"
 )
 ```
 
