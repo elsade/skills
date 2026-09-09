@@ -46,8 +46,8 @@ Format:
 
 <summary> [<ticket-id>]
 
-<github-issue-url-1>
-<github-issue-url-2>
+[<issue-title-1>](<github-issue-url-1>)
+[<issue-title-2>](<github-issue-url-2>)
 ```
 
 Rules:
@@ -55,7 +55,7 @@ Rules:
 - **Category** — infer from PR labels or content (e.g. `(security)`, `(feature)`, `(fix)`, `(infra)`)
 - **Summary** — one line, plain language, what the PR does
 - **Ticket ID** — Linear issue ID if present (e.g. `[CON-625]`)
-- **Issue links** — full GitHub URLs, one per line
+- **Issue links** — markdown links with issue title as text and GitHub URL as href, one per line. Fetch issue titles with `gh issue view <number> --json title`
 
 ### 4. Find the Backend Channel
 
