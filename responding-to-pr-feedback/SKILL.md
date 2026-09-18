@@ -279,18 +279,18 @@ Return a JSON array of objects:
 
 ## Reporting Format
 
-After completing all changes:
+After completing all changes, present a table covering every piece of feedback, then quality checks and next steps:
 
 ```
 ## PR Feedback Summary
 
-### Addressed
-- Comment 1 (alice): Fixed. Changed X to Y in `src/foo/bar.py:42`. Reason: [why valid].
-- Comment 4 (bob): Fixed. Updated call sites in `bruteforce_backend.py:18`, `faiss_backend.py:22`.
-
-### Pushed Back
-- Comment 3 (alice): Not implementing. [Technical reason with evidence].
-  Suggest replying: "[draft reply text]"
+| # | Action | Reviewer | Concern | Detail |
+|---|--------|----------|---------|--------|
+| 1 | Fixed | alice | Use `Optional` instead of `None` union | Changed `X \| None` → `Optional[X]` |
+| 2 | Fixed | bob | Missing error handling on 404 | Added `raise HTTPException(404)` guard |
+| 3 | Already addressed | alice | Extract validator to shared util | Done in commit `a1b2c3d` |
+| 4 | Pushback | carol | Switch to async session | Sync session correct here — no async caller exists; adding async adds complexity with no benefit |
+| 5 | Fixed | bob | Add edge case for empty input | Added `test_empty_input_returns_400` |
 
 ### Quality Checks
 - make lint: passed
@@ -300,3 +300,10 @@ After completing all changes:
 ### Next Steps
 Nothing is committed. Review the changes with `git diff` and commit when ready.
 ```
+
+**Action column values:**
+- `Fixed` — implemented the requested change
+- `Already addressed` — resolved in a prior commit
+- `Pushback` — not implementing, with technical reasoning in Detail
+
+Every comment must appear in the table. No comment gets silently skipped.
