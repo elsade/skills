@@ -1,6 +1,7 @@
 ---
 name: responding-to-pr-feedback
-description: Use when asked to address, handle, or respond to PR review comments or feedback. Covers fetching the PR, reading code for context, evaluating each comment, asking the user when ambiguous, and staging changes for review without committing.
+description: Use when asked to address, handle, or respond to PR review comments or feedback. Covers fetching the PR, reading code for context, evaluating each comment, asking the user when ambiguous, staging changes for review, and running Codex as an independent verifier before reporting.
+allowed-tools: Read, Glob, Grep, Bash(git:*), Bash(gh:*), Bash(codex:*), Agent, Skill
 ---
 
 # Responding to PR Feedback
@@ -9,7 +10,7 @@ description: Use when asked to address, handle, or respond to PR review comments
 
 PR feedback requires evaluation before action. Some comments are valid and should be addressed. Some are wrong and need a clear technical rebuttal. Some are ambiguous — stop and ask the user before touching code.
 
-**Core principle:** Fetch → Read → Evaluate every comment → Ask about ambiguity FIRST → Then act → Quality gate → Stage for review. Never commit.
+**Core principle:** Fetch → Read → Evaluate every comment → Ask about ambiguity FIRST → Then act → Quality gate → Codex verification → Stage for review. Never commit.
 
 ## The Iron Law
 
@@ -50,7 +51,13 @@ Your job is to prepare changes for the human to review. Leave everything staged 
      Run affected tests
    If anything fails, fix it before reporting back.
 
-7. REPLY TO EVERY COMMENT ON GITHUB
+7. CODEX VERIFICATION
+   After quality gate passes, run Codex as an independent verifier.
+   Codex reviews ONLY — it does not make changes.
+   See "Codex Verification Step" section below for details.
+   If Codex finds gaps, fix them and re-run the quality gate before continuing.
+
+8. REPLY TO EVERY COMMENT ON GITHUB
    After changes are staged and quality gate passes, reply to EVERY
    comment thread on the PR. Do not skip any.
 
@@ -75,7 +82,7 @@ Your job is to prepare changes for the human to review. Leave everything staged 
 
    This is NOT optional. Reviewers need closure on every comment.
 
-8. REPORT
+9. REPORT
    Summarize:
    - What you fixed (with file:line references)
    - What you pushed back on (with technical reasoning)
@@ -173,6 +180,75 @@ poetry run pytest tests/unit tests/integration -n 4  # if integration available
 
 If lint or tests fail after your changes: fix them before reporting. Do not report "done" while broken.
 
+## Codex Verification Step
+
+After the quality gate passes, hand the work to Codex for independent verification. Codex acts as a second pair of eyes — it checks whether each piece of feedback was actually addressed, not just whether the code compiles.
+
+### What Codex verifies
+
+For each PR comment that was marked "addressed":
+1. Does the code change actually resolve the reviewer's concern?
+2. Is the fix complete, or does it only partially address the feedback?
+3. Did the fix introduce any new issues (regressions, style inconsistencies, missed call sites)?
+
+For each comment marked "pushback":
+1. Is the technical rebuttal sound?
+2. Did we miss a valid point buried in an otherwise wrong comment?
+
+### How to run
+
+Use the `codex:codex-rescue` subagent if available. If not, fall back to the CLI:
+
+**Option A — subagent:**
+```
+Agent(subagent_type="codex:codex-rescue", prompt=<see below>)
+```
+
+**Option B — CLI fallback:**
+```bash
+codex exec --sandbox read-only "<prompt>"
+```
+
+### Prompt template
+
+Build the prompt from three parts:
+
+1. **The original PR review comments** (from step 1 FETCH)
+2. **The current diff of your changes** (`git diff` output)
+3. **Your action plan** (which comments you addressed, which you pushed back on, and why)
+
+```
+You are verifying that PR feedback was properly addressed. Do NOT write code or suggest patches — verification only.
+
+## Original review comments
+<paste each comment with its ID, author, file, line, and body>
+
+## Changes made (diff)
+<git diff output>
+
+## Action plan
+<for each comment: "Comment N (author): ADDRESSED — <what was done>" or "Comment N (author): PUSHBACK — <reason>">
+
+## Your task
+For each comment, answer:
+1. ADDRESSED comments: Was the feedback fully resolved by the diff? Flag any that are only partially fixed or where the fix doesn't match the request.
+2. PUSHBACK comments: Is the technical reasoning valid? Flag any where the pushback is weak or misses a legitimate point.
+3. NEW ISSUES: Did any fix introduce a regression, miss a call site, or create an inconsistency?
+
+Return a JSON array of objects:
+{
+  "comment_id": <id>,
+  "status": "verified" | "gap" | "partial" | "regression",
+  "detail": "<what's wrong, or empty if verified>"
+}
+```
+
+### Handling Codex results
+
+- **All "verified"**: Proceed to step 8 (reply to comments).
+- **Any "gap" / "partial" / "regression"**: Fix the issues, re-run the quality gate, then re-run Codex verification. Do not loop more than twice — if gaps persist after two rounds, report them to the user and let them decide.
+- **Codex unavailable or errors out**: Log a warning in the report ("Codex verification skipped — unavailable") and proceed. Codex is a safety net, not a gate that blocks all progress.
+
 ## Red Flags — Stop and Re-evaluate
 
 | Thought | Reality |
@@ -183,6 +259,8 @@ If lint or tests fail after your changes: fix them before reporting. Do not repo
 | "The reviewer is an expert, so they must be right" | Verify against THIS codebase. Experts miss context. |
 | "I already pushed back, I should just implement it" | Stand by correct pushback unless user overrides. |
 | "I'll skip the lint run, the change is tiny" | Run the quality gate. Always. |
+| "Codex is slow, I'll skip verification" | Run it. Two minutes now saves a round-trip with the reviewer. |
+| "Codex flagged something but I disagree" | Fix it or explain to the user — don't silently ignore. |
 
 ## Common Mistakes
 
@@ -192,6 +270,8 @@ If lint or tests fail after your changes: fix them before reporting. Do not repo
 | Deciding on ambiguous items unilaterally | Ask the user — it's their codebase |
 | Committing changes | Never. Stage and report. |
 | Skipping quality checks | Always run `make lint` + tests |
+| Skipping Codex verification | Run it after quality gate — catches partial fixes and weak pushback |
+| Looping Codex verification endlessly | Max two rounds — after that, report gaps to user |
 | Applying feedback that was already addressed | Check git diff vs main first |
 | Implementing feedback that breaks interfaces | grep for callers before changing signatures |
 | Not replying to comments on GitHub | Reply to EVERY comment — reviewers need closure |
@@ -199,23 +279,31 @@ If lint or tests fail after your changes: fix them before reporting. Do not repo
 
 ## Reporting Format
 
-After completing all changes:
+After completing all changes, present a table covering every piece of feedback, then quality checks and next steps:
 
 ```
 ## PR Feedback Summary
 
-### Addressed
-- Comment 1 (alice): Fixed. Changed X to Y in `src/foo/bar.py:42`. Reason: [why valid].
-- Comment 4 (bob): Fixed. Updated call sites in `bruteforce_backend.py:18`, `faiss_backend.py:22`.
-
-### Pushed Back
-- Comment 3 (alice): Not implementing. [Technical reason with evidence].
-  Suggest replying: "[draft reply text]"
+| # | Action | Reviewer | Concern | Detail |
+|---|--------|----------|---------|--------|
+| 1 | Fixed | alice | Use `Optional` instead of `None` union | Changed `X \| None` → `Optional[X]` |
+| 2 | Fixed | bob | Missing error handling on 404 | Added `raise HTTPException(404)` guard |
+| 3 | Already addressed | alice | Extract validator to shared util | Done in commit `a1b2c3d` |
+| 4 | Pushback | carol | Switch to async session | Sync session correct here — no async caller exists; adding async adds complexity with no benefit |
+| 5 | Fixed | bob | Add edge case for empty input | Added `test_empty_input_returns_400` |
 
 ### Quality Checks
 - make lint: passed
 - Unit tests (42 tests): passed
+- Codex verification: all verified (or: "2 gaps found and fixed in round 2")
 
 ### Next Steps
 Nothing is committed. Review the changes with `git diff` and commit when ready.
 ```
+
+**Action column values:**
+- `Fixed` — implemented the requested change
+- `Already addressed` — resolved in a prior commit
+- `Pushback` — not implementing, with technical reasoning in Detail
+
+Every comment must appear in the table. No comment gets silently skipped.
