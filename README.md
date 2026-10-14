@@ -10,6 +10,7 @@ Several skills below fan out to reviewer agents that use skills not included in 
 |------|------|--------|------------|
 | `architecture-patterns` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/architecture-patterns) | `~/.claude/skills/architecture-patterns/` |
 | `uncle-bob-craft` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/uncle-bob-craft) | `~/.claude/skills/uncle-bob-craft/` |
+| `clean-code` | skill | [ClawForge](https://github.com/jackjin1997/ClawForge) | `~/.claude/skills/clean-code/` |
 | `api-design-principles` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/api-design-principles) | `~/.claude/skills/api-design-principles/` |
 | `database-architect` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/database-architect) | `~/.claude/skills/database-architect/` |
 | `terraform-specialist` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/terraform-specialist) | `~/.claude/skills/terraform-specialist/` |
@@ -37,6 +38,7 @@ Meta code review for your own branches. Fans out to core reviewers (architecture
 **Depends on** (see [Third-party skill dependencies](#third-party-skill-dependencies) for sources/install):
 - `architecture-patterns` (skill) — architectural review perspective
 - `uncle-bob-craft` (skill) — Clean Code principles review
+- `clean-code` (skill) — comment-verbosity review criteria
 - `api-design-principles` (skill, conditional) — API surface design review
 - `database-architect` (skill, conditional) — database schema/query review
 - `terraform-specialist` (skill, conditional) — Terraform/IaC review
