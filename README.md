@@ -87,6 +87,14 @@ Commits staged changes, pushes, opens a GitHub PR with a Linear issue link in th
 - `mcp__linear-server__save_comment` (MCP) — links PR back to Linear issue
 - `gh` CLI — creates PR and pushes branch
 
+### explain-and-decide
+
+Turns a question into a decision. Restates the question, explains the subject in plain language, supplies the context and binding constraints (reading the repo for evidence), draws ASCII component/stack/sequence diagrams when relationships or ordering are the hard part, lays out 2-4 real options with trade-offs and a recommendation, then answers follow-up questions until the user commits. Explains and advises only — never implements; offers the implementation as a separate step after the decision.
+
+**Usage:** `/explain-and-decide <question>` or triggered when the user asks to explain something, compare approaches, or help choose between options
+
+**Depends on:** nothing beyond built-in file reading and shell access
+
 ### responding-to-pr-feedback
 
 Evaluates PR review comments before acting — checks if already addressed, validates against the codebase, asks the user about ambiguous items, implements valid fixes, pushes back on invalid ones with technical reasoning, runs quality gates, then replies to every comment thread on GitHub. Never commits — stages changes for human review.
