@@ -18,6 +18,9 @@ Several skills below fan out to reviewer agents that use skills not included in 
 | `docker-expert` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/docker-expert) | `~/.claude/skills/docker-expert/` |
 | `observability-engineer` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/observability-engineer) | `~/.claude/skills/observability-engineer/` |
 | `humanizer` | skill/command | [blader/humanizer](https://github.com/blader/humanizer) | `~/.claude/skills/humanizer/` or `~/.claude/commands/humanizer.md` |
+| `frontend-security-coder` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/frontend-security-coder) | `~/.claude/skills/frontend-security-coder/` |
+| `react-best-practices` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/react-best-practices) | `~/.claude/skills/react-best-practices/` |
+| `typescript-pro` | skill | [antigravity-awesome-skills](https://github.com/iradoweck/antigravity-awesome-skills/tree/main/skills/typescript-pro) | `~/.claude/skills/typescript-pro/` |
 | `superpowers:code-reviewer` | plugin agent | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) (`superpowers` plugin) | `claude plugin install superpowers@claude-plugins-official` |
 | `codex:codex-rescue` (or `codex` CLI fallback) | plugin agent / CLI | [openai/codex](https://github.com/openai/codex) | Codex CLI on `PATH`; the `codex-rescue` subagent is optional — both skills fall back to `codex exec --sandbox read-only` if it isn't registered |
 
@@ -51,13 +54,14 @@ Meta code review for your own branches. Fans out to core reviewers (architecture
 
 ### code-review-remote
 
-Reviews other people's PRs on GitHub. Dispatches 5-11 reviewers in parallel (architecture, code quality, Codex, Clean Code, simplification/efficiency, plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings, humanizes the output, and optionally posts comments back to the PR.
+Reviews other people's PRs on GitHub. Dispatches 6-12 reviewers in parallel (architecture, code quality, Codex, Clean Code, comment-verbosity, simplification/efficiency, plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings, humanizes the output, and optionally posts comments back to the PR.
 
 **Usage:** `/code-review-remote 123` (reviews PR #123 in current repo)
 
 **Depends on** (see [Third-party skill dependencies](#third-party-skill-dependencies) for sources/install):
 - `architecture-patterns` (skill) — architectural review perspective
 - `uncle-bob-craft` (skill) — Clean Code principles review
+- `clean-code` (skill) — comment-verbosity review criteria
 - `api-design-principles` (skill, conditional) — API surface design review
 - `database-architect` (skill, conditional) — database schema/query review
 - `terraform-specialist` (skill, conditional) — Terraform/IaC review
@@ -67,6 +71,40 @@ Reviews other people's PRs on GitHub. Dispatches 5-11 reviewers in parallel (arc
 - `humanizer` (skill) — strips AI writing patterns from output
 - `superpowers:code-reviewer` (agent) — code quality reviewer
 - `codex:codex-rescue` (agent) — Codex second-opinion reviewer
+
+### code-review-frontend
+
+Frontend-focused code review for local branches or remote PRs. Dispatches 2-4 reviewers in parallel (frontend security, UI/UX design, optionally React best practices and TypeScript when detected), aggregates and deduplicates findings, clarifies ambiguities, then offers to resolve locally or post to GitHub PR.
+
+**Usage:** `/code-review-frontend` (reviews current branch vs main) or `/code-review-frontend 123` (reviews PR #123)
+
+**Depends on** (see [Third-party skill dependencies](#third-party-skill-dependencies) for sources/install):
+- `frontend-security-coder` (skill) — frontend security review
+- `ui-ux-designer` (skill) — UI/UX design patterns and accessibility review
+- `react-best-practices` (skill, conditional) — React-specific patterns and hooks review
+- `typescript-pro` (skill, conditional) — TypeScript type safety and best practices review
+- `humanizer` (skill) — strips AI writing patterns from output
+
+### slack-review-request
+
+Posts a PR review request to the backend Slack channel, including a summary of the PR, linked GitHub issues with titles, and tagged reviewers (detected from git history or hardcoded for known repos). Always sends as a draft for user approval before posting.
+
+**Usage:** `/slack-review-request` or `/slack-review-request 123`
+
+**Depends on:**
+- `mcp__plugin_slack_slack__slack_send_message_draft` (MCP) — posts draft message to Slack
+- `mcp__plugin_slack_slack__slack_search_channels` (MCP) — finds backend channel
+- `mcp__plugin_slack_slack__slack_search_users` (MCP) — resolves reviewers to Slack IDs
+- `gh` CLI — fetches PR context
+
+### understand-pr
+
+Reads a GitHub PR, extracts the problem statement, intent, design decisions, and test coverage from the PR body, commits, and diff. Returns a structured summary suitable for sharing with teammates or for pre-review context gathering.
+
+**Usage:** `/understand-pr 123` or `/understand-pr` (for current branch if it has a PR)
+
+**Depends on:**
+- `gh` CLI — fetches PR data
 
 ### create-linear-issue
 
@@ -113,3 +151,38 @@ Safely adds or updates a key in an AWS Secrets Manager YAML secret. Downloads ex
 **Depends on:**
 - AWS CLI with SSO login — reads/writes Secrets Manager
 - Python `yaml` module — safe YAML parsing
+
+## Installation
+
+### Install globally
+
+Clone the skills repo to `~/.claude/skill-repos/`:
+
+```bash
+git clone https://github.com/elsade/skills ~/.claude/skill-repos/skills
+```
+
+Symlink each skill folder into `~/.claude/skills/`:
+
+```bash
+ln -s ~/.claude/skill-repos/skills/code-review-meta ~/.claude/skills/code-review-meta
+ln -s ~/.claude/skill-repos/skills/code-review-remote ~/.claude/skills/code-review-remote
+ln -s ~/.claude/skill-repos/skills/code-review-frontend ~/.claude/skills/code-review-frontend
+# ... and so on for each skill
+```
+
+**Or** use the included `install.sh` to symlink all skills at once:
+
+```bash
+~/.claude/skill-repos/skills/install.sh
+```
+
+### Update
+
+Pull the latest from upstream:
+
+```bash
+cd ~/.claude/skill-repos/skills && git pull origin main
+```
+
+Or use the symlinked skills and pull from wherever they're installed — the symlink will pick up changes automatically on the next Claude Code session.
