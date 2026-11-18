@@ -34,7 +34,7 @@ Four of the eight skills are tagged `risk: critical` in that collection's catalo
 
 ### code-review-meta
 
-Meta code review for your own branches. Fans out to core reviewers (architecture, code quality, Clean Code, simplification/efficiency, Codex — plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), aggregates and deduplicates findings into a prioritized fix list, surfaces ambiguities for clarification, then offers to resolve.
+Meta code review for your own branches. Fans out to core reviewers (architecture, code quality, Clean Code, simplification/efficiency, comment verbosity, Codex — plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), aggregates and deduplicates findings into a prioritized fix list, surfaces ambiguities for clarification, then offers to resolve.
 
 **Usage:** `/code-review-meta` (reviews current branch vs main) or `/code-review-meta 123` (reviews PR #123)
 
