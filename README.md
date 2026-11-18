@@ -31,7 +31,7 @@ Four of the eight skills are tagged `risk: critical` in that collection's catalo
 
 ### code-review-meta
 
-Meta code review for your own branches. Fans out to core reviewers (architecture, code quality, Clean Code, simplification/efficiency, Codex — plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), aggregates and deduplicates findings into a prioritized fix list, surfaces ambiguities for clarification, then offers to resolve.
+Meta code review for your own branches. Fans out to core reviewers (architecture, code quality, Clean Code, simplification/efficiency, comment verbosity, Codex — plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), aggregates and deduplicates findings into a prioritized fix list, surfaces ambiguities for clarification, then offers to resolve.
 
 **Usage:** `/code-review-meta` (reviews current branch vs main) or `/code-review-meta 123` (reviews PR #123)
 
@@ -51,13 +51,14 @@ Meta code review for your own branches. Fans out to core reviewers (architecture
 
 ### code-review-remote
 
-Reviews other people's PRs on GitHub. Dispatches 5-11 reviewers in parallel (architecture, code quality, Codex, Clean Code, simplification/efficiency, plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings, humanizes the output, and optionally posts comments back to the PR.
+Reviews other people's PRs on GitHub. Dispatches 6-12 reviewers in parallel (architecture, code quality, Codex, Clean Code, simplification/efficiency, comment verbosity, plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings, humanizes the output, and optionally posts comments back to the PR.
 
 **Usage:** `/code-review-remote 123` (reviews PR #123 in current repo)
 
 **Depends on** (see [Third-party skill dependencies](#third-party-skill-dependencies) for sources/install):
 - `architecture-patterns` (skill) — architectural review perspective
 - `uncle-bob-craft` (skill) — Clean Code principles review
+- `clean-code` (skill) — comment-verbosity review criteria
 - `api-design-principles` (skill, conditional) — API surface design review
 - `database-architect` (skill, conditional) — database schema/query review
 - `terraform-specialist` (skill, conditional) — Terraform/IaC review
