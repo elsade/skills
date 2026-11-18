@@ -11,6 +11,8 @@ mkdir -p "$SKILLS_DIR"
 echo "Installing skills from $REPO_DIR to $SKILLS_DIR"
 
 for skill_dir in "$REPO_DIR"/*/; do
+    # The glob leaves a trailing slash, which would never match readlink below
+    skill_dir="${skill_dir%/}"
     skill_name=$(basename "$skill_dir")
 
     # Skip non-skill directories
@@ -24,6 +26,12 @@ for skill_dir in "$REPO_DIR"/*/; do
     if [[ -L "$link_target" && "$(readlink "$link_target")" != "$skill_dir" ]]; then
         echo "  Removing old symlink: $link_target"
         rm "$link_target"
+    fi
+
+    # A real directory is an old copy; leave it for the user rather than delete it
+    if [[ -e "$link_target" && ! -L "$link_target" ]]; then
+        echo "  ! $skill_name: $link_target is a copy, not a symlink. Remove it and re-run to install."
+        continue
     fi
 
     # Create symlink if it doesn't exist
