@@ -1,6 +1,6 @@
 ---
 name: code-review-remote
-description: Use when reviewing someone else's pull request on GitHub - the user asks to review a PR, invokes /code-review-remote with a PR number, or shares a PR URL. Fans out to parallel architecture, code-quality, Clean Code, simplification, and Codex reviewers (plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), fetches existing PR comments to avoid duplicate feedback, deduplicates findings, and humanizes the output before presenting it.
+description: Use when reviewing someone else's pull request on GitHub - the user asks to review a PR, invokes /code-review-remote with a PR number, or shares a PR URL. Fans out to parallel architecture, code-quality, Clean Code, simplification, comment-verbosity, and Codex reviewers (plus conditional API, database, Terraform, Kubernetes, Docker, and observability reviewers), fetches existing PR comments to avoid duplicate feedback, deduplicates findings, and humanizes the output before presenting it.
 argument-hint: "[PR number or URL]"
 allowed-tools: Read, Glob, Grep, Bash(git:*), Bash(gh:*), Bash(codex:*), Agent, Skill
 ---
@@ -9,7 +9,7 @@ allowed-tools: Read, Glob, Grep, Bash(git:*), Bash(gh:*), Bash(codex:*), Agent, 
 
 ## Overview
 
-Reviews other people's PRs on GitHub. Runs five core reviewers in parallel (plus conditional reviewers for API, database, infrastructure, and observability changes), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings against both reviewer overlap and prior comments, then humanizes the final output before presenting it.
+Reviews other people's PRs on GitHub. Runs six core reviewers in parallel (plus conditional reviewers for API, database, infrastructure, and observability changes), fetches all existing PR comments to avoid duplicate feedback, deduplicates findings against both reviewer overlap and prior comments, then humanizes the final output before presenting it.
 
 ## When to Use
 
@@ -47,9 +47,9 @@ gh api repos/{owner}/{repo}/issues/{N}/comments --paginate
 
 Parse into a normalized list with keys: `author`, `file`, `lines`, `body`, `type` (review_comment | issue_comment | review_body).
 
-### 3. Fan out reviewers in parallel (5 core + 6 conditional)
+### 3. Fan out reviewers in parallel (6 core + 6 conditional)
 
-Send a **single message with all applicable Agent tool calls** so they run concurrently. Always dispatch A-E. Only dispatch F-K whose gate conditions match the diff — each is independent, so a PR can trigger any combination of them (or none). Give each reviewer the full diff plus commit context. Tell each to return findings as a JSON array of objects with keys: `file`, `lines`, `severity` (critical|high|medium|low|nit), `category`, `summary`, `suggested_fix`.
+Send a **single message with all applicable Agent tool calls** so they run concurrently. Always dispatch A-F. Only dispatch G-L whose gate conditions match the diff — each is independent, so a PR can trigger any combination of them (or none). Give each reviewer the full diff plus commit context. Tell each to return findings as a JSON array of objects with keys: `file`, `lines`, `severity` (critical|high|medium|low|nit), `category`, `summary`, `suggested_fix`.
 
 **Reviewer A — Architectural perspective:**
 - `subagent_type: general-purpose`
@@ -72,39 +72,43 @@ Send a **single message with all applicable Agent tool calls** so they run concu
 - `subagent_type: general-purpose`
 - Prompt: "Review this diff for reuse opportunities, unnecessary complexity, and efficiency issues — the same lens as the `/simplify` command, but review only. Flag redundant or duplicated logic that should reuse existing code, premature or unnecessary abstraction, dead code, and the change operating at the wrong altitude (over-engineered for what was asked, or missing an obvious simplification). Do NOT flag correctness bugs, security issues, or naming/SOLID concerns — those are covered by other reviewers. Do NOT edit any files, only return JSON findings."
 
-**Reviewer F — API design (conditional):**
+**Reviewer F — Comment verbosity:**
+- `subagent_type: general-purpose`
+- Prompt: "Review this diff using the `clean-code` skill's Comments criteria. Look only at comments newly added or modified by this diff — not pre-existing ones. Prefer clear names, small functions, and straightforward control flow over explanatory comments. For every introduced comment, question whether it's needed at all: it earns its place only if it explains *why* — a hidden constraint, a non-obvious reason, a tradeoff, a workaround, surprising behavior, an external requirement, or a decision a future maintainer might otherwise undo — never if removing it would leave the code equally clear. For each one that fails that test, give a concrete shorter-but-correct replacement in `suggested_fix` (trimmed text, or 'delete — code is self-explanatory' with why). Flag comments that are redundant, noise, outdated, position markers or unnecessary section headings, multi-line where one line would do, that repeat names already in the code, or that narrate WHAT the code does instead of WHY. When a comment exists to compensate for unclear code, don't just cut it — suggest the concrete rename or restructure that would make the comment unnecessary. Never demand a comment just because code is complex; propose making the code clearer first. Exempt: required legal/license/copyright notices, tool-interpreted directives (lint/type-checker suppressions like `noqa`, `type: ignore`, `eslint-disable`, pragmas), and useful public API documentation — these change tooling behavior, satisfy a notice requirement, or document a contract for callers, not just readability, so never shorten or delete them. Use severity `low` unless a comment is actively misleading or obscures a material issue, which rates higher. Do NOT flag correctness or architecture issues — those are covered by other reviewers; naming and structure suggestions are in scope only as the alternative to a comment. Return JSON findings."
+
+**Reviewer G — API design (conditional):**
 - **Only dispatch if** the diff touches HTTP API surface: route definitions, endpoint decorators (`@app.get`, `@app.post`, `@router`, `APIRouter`), request/response models used in route signatures, OpenAPI schema files, or nginx/gateway route configs.
-- Quick heuristic: scan the diff for patterns like `@(app|router)\.(get|post|put|patch|delete)`, `APIRouter`, `location ~`, `proxy_pass`, or files matching `**/api/**`, `**/routes.*`. If none match, skip Reviewer F entirely.
+- Quick heuristic: scan the diff for patterns like `@(app|router)\.(get|post|put|patch|delete)`, `APIRouter`, `location ~`, `proxy_pass`, or files matching `**/api/**`, `**/routes.*`. If none match, skip Reviewer G entirely.
 - `subagent_type: general-purpose`
 - Prompt: "Review this diff using the `api-design-principles` skill. Flag issues with endpoint naming, HTTP method usage, request/response schemas, versioning, error responses, pagination, and REST conventions. Focus on API surface design only, NOT internal implementation or architecture — those are covered by other reviewers. Return JSON findings."
 
-**Reviewer G — Database architecture (conditional):**
+**Reviewer H — Database architecture (conditional):**
 - **Only dispatch if** the diff touches database concerns: migration files, SQLAlchemy models (`Column`, `Table`, `ForeignKey`, `relationship`), repository implementations, raw SQL, or Alembic config.
-- Quick heuristic: scan the diff for patterns like `op.create_table`, `op.add_column`, `Column(`, `ForeignKey(`, `Base = declarative_base`, `AsyncSession`, `SELECT`, `INSERT`, `UPDATE`, `DELETE`, or files matching `**/migrations/**`, `**/db/**`, `**/repositories/**`. If none match, skip Reviewer G entirely.
+- Quick heuristic: scan the diff for patterns like `op.create_table`, `op.add_column`, `Column(`, `ForeignKey(`, `Base = declarative_base`, `AsyncSession`, `SELECT`, `INSERT`, `UPDATE`, `DELETE`, or files matching `**/migrations/**`, `**/db/**`, `**/repositories/**`. If none match, skip Reviewer H entirely.
 - `subagent_type: general-purpose`
 - Prompt: "Review this diff using the `database-architect` skill. Flag issues with schema design, normalization, indexing, foreign key constraints, migration safety (data loss, locking), naming conventions, query performance, and transaction boundaries. Focus on database concerns only, NOT application logic or API design — those are covered by other reviewers. Return JSON findings."
 
-**Reviewer H — Terraform (conditional):**
+**Reviewer I — Terraform (conditional):**
 - **Only dispatch if** the diff touches Terraform: `.tf`, `.tfvars`, `.tfvars.json`, `.terraform.lock.hcl` files, or files under `**/terraform/**`, `**/infra/**`, `**/environments/**`.
-- Quick heuristic: scan the diff for patterns like `resource "`, `module "`, `provider "`, `data "`, `terraform {`, `backend "s3"` / `backend "gcs"` / `backend "azurerm"`, `variable "`, `output "`. If none match, skip Reviewer H entirely.
+- Quick heuristic: scan the diff for patterns like `resource "`, `module "`, `provider "`, `data "`, `terraform {`, `backend "s3"` / `backend "gcs"` / `backend "azurerm"`, `variable "`, `output "`. If none match, skip Reviewer I entirely.
 - `subagent_type: general-purpose`
 - Prompt: "Review this diff using the `terraform-specialist` skill. Flag issues with state management, module design, resource naming, provider version pinning, unsafe changes (implicit resource replacement, missing lifecycle blocks, hardcoded secrets), and IaC best practices. Focus on Terraform/infrastructure-as-code concerns only, NOT application logic. Return JSON findings."
 
-**Reviewer I — Kubernetes / GitOps (conditional):**
+**Reviewer J — Kubernetes / GitOps (conditional):**
 - **Only dispatch if** the diff touches Kubernetes manifests, Helm charts, or GitOps config: files under `**/k8s/**`, `**/kubernetes/**`, `**/charts/**`, `**/manifests/**`, `kustomization.yaml`, `Chart.yaml`, `values*.yaml`, `templates/**/*.yaml`.
-- Quick heuristic: scan the diff for `apiVersion:` combined with `kind: (Deployment|Service|StatefulSet|DaemonSet|Ingress|ConfigMap|Secret|HorizontalPodAutoscaler|PodDisruptionBudget|CronJob)`, or GitOps kinds `kind: Application` (ArgoCD) / `kind: HelmRelease` / `kind: Kustomization` (Flux), or Helm template syntax `{{ .Values`, `{{- if`, `helm.sh/chart`. If none match, skip Reviewer I entirely.
+- Quick heuristic: scan the diff for `apiVersion:` combined with `kind: (Deployment|Service|StatefulSet|DaemonSet|Ingress|ConfigMap|Secret|HorizontalPodAutoscaler|PodDisruptionBudget|CronJob)`, or GitOps kinds `kind: Application` (ArgoCD) / `kind: HelmRelease` / `kind: Kustomization` (Flux), or Helm template syntax `{{ .Values`, `{{- if`, `helm.sh/chart`. If none match, skip Reviewer J entirely.
 - `subagent_type: general-purpose`
 - Prompt: "Review this diff using the `kubernetes-architect` skill. Flag issues with resource requests/limits, pod security context, missing PodDisruptionBudgets or HPA misconfiguration, GitOps drift risk, Helm templating mistakes, and orchestration/cluster-level concerns. Focus on Kubernetes and GitOps concerns only, NOT application logic. Return JSON findings."
 
-**Reviewer J — Docker (conditional):**
+**Reviewer K — Docker (conditional):**
 - **Only dispatch if** the diff touches container build files: `Dockerfile`, `Dockerfile.*`, or files under `**/docker/**`.
-- Quick heuristic: scan the diff for `FROM `, `RUN `, `COPY --from=`, `ENTRYPOINT`, `CMD`. If none match, skip Reviewer J entirely.
+- Quick heuristic: scan the diff for `FROM `, `RUN `, `COPY --from=`, `ENTRYPOINT`, `CMD`. If none match, skip Reviewer K entirely.
 - `subagent_type: general-purpose`
 - Prompt: "Review this diff using the `docker-expert` skill. Flag issues with image size/layer efficiency, multi-stage build opportunities, security hardening (running as root, unpinned base images, leaked build secrets), and container best practices. Focus on Docker/container build concerns only, NOT application logic or Kubernetes deployment concerns — those are covered by other reviewers. Return JSON findings."
 
-**Reviewer K — Observability / OTel (conditional):**
+**Reviewer L — Observability / OTel (conditional):**
 - **Only dispatch if** the diff touches OTel instrumentation or observability config: SDK initialization, span/trace/metric/log code, OTel Collector config files, or telemetry utility modules.
-- Quick heuristic: scan the diff for patterns like `opentelemetry`, `init_otel`, `get_current_span`, `set_attribute`, `record_exception`, `set_status`, `StatusCode`, `TracerProvider`, `MeterProvider`, `BatchSpanProcessor`, `OTEL_`, `otlp`, or files matching `**/telemetry/**`, `**/otel*.py`, `**/tracing/**`, `*otel-collector*.yaml`, `*otel*.yaml`. If none match, skip Reviewer K entirely.
+- Quick heuristic: scan the diff for patterns like `opentelemetry`, `init_otel`, `get_current_span`, `set_attribute`, `record_exception`, `set_status`, `StatusCode`, `TracerProvider`, `MeterProvider`, `BatchSpanProcessor`, `OTEL_`, `otlp`, or files matching `**/telemetry/**`, `**/otel*.py`, `**/tracing/**`, `*otel-collector*.yaml`, `*otel*.yaml`. If none match, skip Reviewer L entirely.
 - `subagent_type: general-purpose`
 - Prompt: "Review this diff using the `observability-engineer` skill. Focus on: OTel semantic convention compliance (attribute naming, span status, error recording), context propagation correctness (traceparent injection/extraction), sampling strategy soundness, metric naming and cardinality, log-to-trace correlation, collector pipeline ordering and processor correctness, missing required span attributes, and performance implications (sync vs batch export, SDK no-op guard correctness). Focus on observability correctness only, NOT general code quality or architecture — those are covered by other reviewers. Return JSON findings."
 
@@ -232,7 +236,7 @@ gh api repos/{owner}/{repo}/pulls/{N}/comments \
 |------|------|-----------|
 | Fetch PR metadata + diff | Bash (`gh`) | — |
 | Fetch existing comments | Bash (`gh api`) | **Yes** (with above) |
-| Dispatch 5-11 reviewers | Agent x 5-11 in one message | **Yes** |
+| Dispatch 6-12 reviewers | Agent x 6-12 in one message | **Yes** |
 | Aggregate/dedupe reviewers | In-context reasoning | — |
 | Dedupe vs existing comments | In-context reasoning | — |
 | Humanize output | Apply humanizer patterns | — |
